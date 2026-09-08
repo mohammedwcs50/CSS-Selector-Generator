@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selector Scaffold — CSS rule generator</title>
+<style>
+  @font-face {
+    font-family: 'system-sans';
+    src: local('IBM Plex Sans'), local('Segoe UI');
+  }
+
+  :root {
+    --bg: #12141a;
+    --panel: #1a1d26;
+    --panel-raised: #20232e;
+    --border: #2c3040;
+    --border-soft: #22252f;
+    --text: #e7e9ef;
+    --text-dim: #8b8fa3;
+    --text-faint: #565b6e;
+    --accent: #5fc9a8;
+    --accent-dim: #3d8a71;
+    --accent-soft: rgba(95, 201, 168, 0.12);
+    --warn: #e0855a;
+    --mono: 'IBM Plex Mono', 'Courier New', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', 'system-sans', -apple-system, sans-serif;
+    --radius: 3px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* subtle structural grid texture on the page background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--border-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border-soft) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.35;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    border-bottom: 1px solid var(--border);
+    padding: 22px clamp(16px, 4vw, 40px);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .brand-mark {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 3px 7px;
+    line-height: 1;
+  }
+
+  h1 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .tagline {
+    color: var(--text-dim);
+    font-size: 13.5px;
+    max-width: 46ch;
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(16px, 3vw, 32px) clamp(16px, 4vw, 40px) 40px;
+    gap: 16px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: var(--sans);
+    font-size: 13.5px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel-raised);
+    color: var(--text);
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+
+  button:hover { border-color: var(--text-faint); }
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0c1512;
+  }
+  button.primary:hover { background: #6fd4b3; }
+
+  button.ghost {
+    background: transparent;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .stat {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+
+  .stat strong {
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  @media (max-width: 860px) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 360px;
+  }
+
+  .pane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-raised);
+  }
+
+  .pane-head .label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-faint);
+  }
+  .pane[data-active="true"] .dot { background: var(--accent); }
+
+  textarea, pre {
+    flex: 1;
+    margin: 0;
+    padding: 16px;
+    border: none;
+    resize: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    tab-size: 2;
+  }
+
+  textarea:focus { outline: none; }
+
+  textarea::placeholder { color: var(--text-faint); }
+
+  pre {
+    overflow: auto;
+    white-space: pre;
+  }
+
+  pre .sel { color: #8fd6c0; }
+  pre .brace { color: var(--text-dim); }
+  pre .empty-msg { color: var(--text-faint); font-style: italic; }
+
+  .copy-flash {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .copy-flash.show { opacity: 1; }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 14px clamp(16px, 4vw, 40px) 20px;
+    color: var(--text-faint);
+    font-size: 12px;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  code.inline {
+    font-family: var(--mono);
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-mark">.sel {}</span>
+    <div>
+      <h1>Selector Scaffold</h1>
+    </div>
+  </div>
+  <div class="tagline">Paste markup, get one empty CSS rule per element, nested to match your HTML.</div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <button class="primary" id="generateBtn">Generate CSS</button>
+    <button class="ghost" id="clearBtn">Clear</button>
+    <button class="ghost" id="copyBtn" disabled>Copy CSS</button>
+    <span class="copy-flash" id="copyFlash">copied</span>
+    <span class="stat" id="stat"></span>
+  </div>
+
+  <div class="workspace">
+    <section class="pane" id="inputPane" data-active="true">
+      <div class="pane-head">
+        <span class="label"><span class="dot"></span>input.html</span>
+      </div>
+      <textarea id="htmlInput" spellcheck="false" placeholder="<div class=&quot;parent&quot;>
+  <div class=&quot;child1&quot;>
+    <div class=&quot;child2&quot;>
+      <p>Hello</p>
+    </div>
+  </div>
+</div>"></textarea>
+    </section>
+
+    <section class="pane" id="outputPane">
+      <div class="pane-head">
+        <span class="label"><span class="dot"></span>output.css</span>
+      </div>
+      <pre id="cssOutput"><span class="empty-msg">// generated CSS will appear here</span></pre>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Selectors prefer <code class="inline">#id</code>, then fall back to <code class="inline">.class.names</code>, then the tag itself. Every rule nests under its ancestors' selectors as a descendant combinator.
+</footer>
+
+<script>
+(function () {
+  const input = document.getElementById('htmlInput');
+  const output = document.getElementById('cssOutput');
+  const generateBtn = document.getElementById('generateBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyFlash = document.getElementById('copyFlash');
+  const stat = document.getElementById('stat');
+  const inputPane = document.getElementById('inputPane');
+  const outputPane = document.getElementById('outputPane');
+
+  const SKIP_TAGS = new Set([
+    'script', 'style', 'meta', 'link', 'title', 'noscript',
+    'template', 'head', 'base'
+  ]);
+
+  let lastCSS = '';
+
+  function escapeIdentifier(str) {
+    // Use native CSS.escape when available, otherwise a safe manual fallback.
+    if (window.CSS && typeof CSS.escape === 'function') {
+      return CSS.escape(str);
+    }
+    return str.replace(/([^a-zA-Z0-9_-])/g, '\\$1');
+  }
+
+  function ownSelectorFor(el) {
+    if (el.id && el.id.trim().length) {
+      return '#' + escapeIdentifier(el.id.trim());
+    }
+    if (el.classList && el.classList.length) {
+      const classes = Array.from(el.classList)
+        .filter(Boolean)
+        .map(escapeIdentifier);
+      if (classes.length) {
+        return '.' + classes.join('.');
+      }
+    }
+    return el.tagName.toLowerCase();
+  }
+
+  function traverse(el, parentSelector, results, seen) {
+    if (SKIP_TAGS.has(el.tagName.toLowerCase())) return;
+
+    const own = ownSelectorFor(el);
+    const full = parentSelector ? parentSelector + ' ' + own : own;
+
+    if (!seen.has(full)) {
+      seen.add(full);
+      results.push(full);
+    }
+
+    for (const child of Array.from(el.children)) {
+      traverse(child, full, results, seen);
+    }
+  }
+
+  function generateSelectors(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const results = [];
+    const seen = new Set();
+
+    const roots = Array.from(doc.body.children);
+    for (const root of roots) {
+      traverse(root, '', results, seen);
+    }
+    return results;
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function renderOutput(selectors) {
+    if (!selectors.length) {
+      output.innerHTML = '<span class="empty-msg">// no elements found — check your markup</span>';
+      lastCSS = '';
+      copyBtn.disabled = true;
+      stat.textContent = '';
+      outputPane.dataset.active = 'false';
+      return;
+    }
+
+    const blocks = selectors.map(sel =>
+      `<span class="sel">${escapeHtml(sel)}</span> <span class="brace">{</span>\n\n<span class="brace">}</span>`
+    );
+
+    output.innerHTML = blocks.join('\n\n');
+    lastCSS = selectors.map(sel => `${sel} {\n\n}`).join('\n\n');
+    copyBtn.disabled = false;
+    stat.innerHTML = `<strong>${selectors.length}</strong> selector${selectors.length === 1 ? '' : 's'} generated`;
+    outputPane.dataset.active = 'true';
+  }
+
+  function run() {
+    const html = input.value;
+    inputPane.dataset.active = html.trim().length ? 'true' : 'false';
+
+    if (!html.trim()) {
+      output.innerHTML = '<span class="empty-msg">// paste some HTML and hit Generate CSS</span>';
+      lastCSS = '';
+      copyBtn.disabled = true;
+      stat.textContent = '';
+      outputPane.dataset.active = 'false';
+      return;
+    }
+
+    try {
+      const selectors = generateSelectors(html);
+      renderOutput(selectors);
+    } catch (err) {
+      output.innerHTML = '<span class="empty-msg">// could not parse that markup — check for unclosed tags</span>';
+      lastCSS = '';
+      copyBtn.disabled = true;
+      stat.textContent = '';
+    }
+  }
+
+  generateBtn.addEventListener('click', run);
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    lastCSS = '';
+    output.innerHTML = '<span class="empty-msg">// generated CSS will appear here</span>';
+    copyBtn.disabled = true;
+    stat.textContent = '';
+    inputPane.dataset.active = 'false';
+    outputPane.dataset.active = 'false';
+    input.focus();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    if (!lastCSS) return;
+    try {
+      await navigator.clipboard.writeText(lastCSS);
+    } catch (err) {
+      // Fallback for environments without clipboard API access
+      const ta = document.createElement('textarea');
+      ta.value = lastCSS;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    copyFlash.classList.add('show');
+    setTimeout(() => copyFlash.classList.remove('show'), 1200);
+  });
+
+  // Generate on load with the placeholder-equivalent example, and on Ctrl/Cmd+Enter
+  input.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      run();
+    }
+  });
+
+  // Seed with a starter example so the tool isn't blank on first open
+  input.value = `<div class="parent">
+  <div class="child1">
+    <div class="child2">
+      <p>Hello</p>
+    </div>
+  </div>
+</div>`;
+  run();
+})();
+</script>
+
+</body>
+</html>
